@@ -65,72 +65,80 @@ public:
 };
 
 // Lớp BFS
+// Lớp BFS
 class BFS {
 private:
     int n, m, x1, y1, x2, y2;
-
-    // Mảng lưu trữ các nước đi của quân mã
     int dx[8] = {2, 2, -2, -2, 1, 1, -1, -1};
     int dy[8] = {1, -1, 1, -1, 2, -2, 2, -2};
 
 public:
-    BFS(int n, int m, int x1, int y1, int x2, int y2) 
-        : n(n), m(m), x1(x1), y1(y1), x2(x2), y2(y2) {}
+    // Khởi tạo đối tượng BFS với các tham số
+    BFS(int n, int m, int x1, int y1, int x2, int y2);
 
-    // Hàm tìm số bước tối thiểu bằng BFS
-    int find_min_steps() {
-        // Cấp phát mảng 2 chiều thủ công cho visited
-        bool **visited = new bool*[n];
-        for (int i = 0; i < n; ++i) {
-            visited[i] = new bool[m];
-            for (int j = 0; j < m; ++j) {
-                visited[i][j] = false;
-            }
-        }
+    // Khởi tạo mảng visited
+    bool** taoMangDaTham();
 
-        // Khởi tạo hàng đợi
-        QUEUE<Position> q;
+    // Giải phóng mảng visited
+    void giaiPhongMang(bool** daTham);
 
-        // Thêm vị trí ban đầu vào hàng đợi
-        q.push({x1, y1, 0});
-        visited[x1][y1] = true;
+    // Xử lý các nước đi của quân mã
+    void xuLyNuocDi(QUEUE<Position>& q, bool** daTham, Position& hienTai);
 
-        while (q.size() > 0) {
-            Position current = q.front(); // Lấy vị trí hiện tại
-            q.pop();
-
-            // Kiểm tra nếu đã đến đích
-            if (current.x == x2 && current.y == y2) {
-                // Giải phóng bộ nhớ trước khi kết thúc chương trình
-                for (int i = 0; i < n; ++i) {
-                    delete[] visited[i];
-                }
-                delete[] visited;
-                return current.steps; // Trả về số bước
-            }
-
-            // Duyệt qua các nước đi của quân mã
-            for (int i = 0; i < 8; ++i) {
-                int nx = current.x + dx[i];
-                int ny = current.y + dy[i];
-
-                // Kiểm tra tọa độ hợp lệ và chưa được thăm
-                if (nx >= 0 && ny >= 0 && nx < n && ny < m && !visited[nx][ny]) {
-                    visited[nx][ny] = true; // Đánh dấu đã thăm
-                    q.push({nx, ny, current.steps + 1}); // Thêm vào hàng đợi
-                }
-            }
-        }
-
-        // Giải phóng bộ nhớ trước khi kết thúc chương trình
-        for (int i = 0; i < n; ++i) {
-            delete[] visited[i];
-        }
-        delete[] visited;
-
-        return -1; // Không tìm thấy đường đến đích
-    }
+    // Tìm số bước tối thiểu để quân mã di chuyển từ điểm bắt đầu đến điểm đích
+    int timBuocDiItNhat();
 };
+
+// Định nghĩa các phương thức bên ngoài lớp
+
+BFS::BFS(int n, int m, int x1, int y1, int x2, int y2) 
+    : n(n), m(m), x1(x1), y1(y1), x2(x2), y2(y2) {}
+
+bool** BFS::taoMangDaTham() {
+    bool **daTham = new bool*[n];
+    for (int i = 0; i < n; ++i) {
+        daTham[i] = new bool[m]{false};
+    }
+    return daTham;
+}
+
+void BFS::giaiPhongMang(bool** daTham) {
+    for (int i = 0; i < n; ++i) {
+        delete[] daTham[i];
+    }
+    delete[] daTham;
+}
+
+void BFS::xuLyNuocDi(QUEUE<Position>& q, bool** daTham, Position& hienTai) {
+    for (int i = 0; i < 8; ++i) {
+        int nx = hienTai.x + dx[i];
+        int ny = hienTai.y + dy[i];
+        if (nx >= 0 && ny >= 0 && nx < n && ny < m && !daTham[nx][ny]) {
+            daTham[nx][ny] = true;
+            q.push({nx, ny, hienTai.steps + 1});
+        }
+    }
+}
+
+int BFS::timBuocDiItNhat() {
+    bool **daTham = taoMangDaTham();
+    QUEUE<Position> q;
+    q.push({x1, y1, 0});
+    daTham[x1][y1] = true;
+
+    while (q.size() > 0) {
+        Position hienTai = q.front();
+        q.pop();
+        if (hienTai.x == x2 && hienTai.y == y2) {
+            giaiPhongMang(daTham);
+            return hienTai.steps;
+        }
+        xuLyNuocDi(q, daTham, hienTai);
+    }
+
+    giaiPhongMang(daTham);
+    return -1;
+}
 
 int main() {
     int n, m, x1, y1, x2, y2;
@@ -138,7 +146,7 @@ int main() {
 
     // Tạo đối tượng BFS và tìm số bước
     BFS bfs(n, m, x1, y1, x2, y2);
-    int result = bfs.find_min_steps();
+    int result = bfs.timBuocDiItNhat();
 
     cout << result; // In ra số bước ít nhất
     return 0;
